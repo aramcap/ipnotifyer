@@ -21,6 +21,8 @@ import requests
 import os
 from email.message import EmailMessage
 
+from datetime import datetime
+
 ADDRESS_FILE = '/tmp/old_ip_address.txt'
 
 def notify_ip_change(newIp):
@@ -42,13 +44,20 @@ La nueva IP es {}
 
 def detect_ip_change():
     blnDelta = False
-    currIp = requests.get('https://api.ipify.org').text
+    req = requests.get('https://api.ipify.org')
+    currIp = req.text
     if not os.path.isfile(ADDRESS_FILE):
         persist_ip('127.0.0.1')
     oldIp = read_old_ip()
     if currIp != oldIp:
         blnDelta = True
     persist_ip(currIp)
+    # check status code test
+    if req.status_code != 200:
+        now = datetime.now()
+        f = open('/tmp/status_code_check', 'a')
+        f.write("{} -> {}".format(now.strftime("%Y/%m/%d, %H:%M:%S"), req.status_code))
+        f.close()
     return (blnDelta, currIp)
 
 def persist_ip(ip):
